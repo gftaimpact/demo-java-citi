@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.scalesec</groupId>
-	<artifactId>demo-java-poc</artifactId>
+	<artifactId>demo-java-citi</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>demo-java-poc</name>
+	<name>demo-java-citi</name>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
