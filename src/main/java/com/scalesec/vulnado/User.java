@@ -1,27 +1,26 @@
 package com.scalesec.vulnado;
 
 import java.sql.Connection;
-import java.sql.Statement;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import javax.crypto.SecretKey;
 
 public class User {
-  public String id, username, hashedPassword;
+  private static final String ID = "id";
+  private static final String USERNAME = "username";
+  private static final String HASHED_PASSWORD = "hashedPassword";
 
   public User(String id, String username, String hashedPassword) {
-    this.id = id;
-    this.username = username;
-    this.hashedPassword = hashedPassword;
+    this.ID = id;
+    this.USERNAME = username;
+    this.HASHED_PASSWORD = hashedPassword;
   }
 
   public String token(String secret) {
     SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
-    String jws = Jwts.builder().setSubject(this.username).signWith(key).compact();
-    return jws;
+    return Jwts.builder().setSubject(this.USERNAME).signWith(key).compact();
   }
 
   public static void assertAuth(String secret, String token) {
@@ -37,35 +36,31 @@ public class User {
   }
 
   public static User fetch(String un) {
-    Statement stmt = null;
+    PreparedStatement stmt = null;
     User user = null;
-    Connection cxn = null; // Incluido por GFT AI Impact Bot
+    Connection cxn = null;
     try {
-      cxn = Postgres.connection(); // Alterado por GFT AI Impact Bot
-      stmt = cxn.createStatement();
-      System.out.println("Opened database successfully");
-
-      String query = "select * from users where username = '" + un + "' limit 1";
-      System.out.println(query);
-      ResultSet rs = stmt.executeQuery(query);
+      cxn = Postgres.connection();
+      stmt = cxn.prepareStatement("select * from users where username = ? limit 1");
+      stmt.setString(1, un);
+      ResultSet rs = stmt.executeQuery();
       if (rs.next()) {
-        String user_id = rs.getString("user_id");
+        String userId = rs.getString("user_id");
         String username = rs.getString("username");
         String password = rs.getString("password");
-        user = new User(user_id, username, password);
+        user = new User(userId, username, password);
       }
     } catch (Exception e) {
       e.printStackTrace();
-      System.err.println(e.getClass().getName()+": "+e.getMessage());
-      return null; // Alterado por GFT AI Impact Bot
+      return null;
     } finally {
       try {
-        if (stmt != null) stmt.close(); // Incluido por GFT AI Impact Bot
-        if (cxn != null) cxn.close(); // Incluido por GFT AI Impact Bot
+        if (stmt != null) stmt.close();
+        if (cxn != null) cxn.close();
       } catch (Exception e) {
         e.printStackTrace();
       }
     }
-    return user; // Alterado por GFT AI Impact Bot
+    return user;
   }
 }
