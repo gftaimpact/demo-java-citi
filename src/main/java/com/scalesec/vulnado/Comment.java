@@ -1,21 +1,27 @@
 package com.scalesec.vulnado;
 
-import org.apache.catalina.Server;
 import java.sql.*;
 import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Comment {
-  public String id, username, body;
-  public Timestamp created_on;
+  private static final Logger LOGGER = Logger.getLogger(Comment.class.getName());
+  private static final boolean DEBUG = false; // Set to false for production
 
-  public Comment(String id, String username, String body, Timestamp created_on) {
+  private String id;
+  private String username;
+  private String body;
+  private Timestamp createdOn;
+
+  public Comment(String id, String username, String body, Timestamp createdOn) {
     this.id = id;
     this.username = username;
     this.body = body;
-    this.created_on = created_on;
+    this.createdOn = createdOn;
   }
 
   public static Comment create(String username, String body){
@@ -33,72 +39,79 @@ public class Comment {
     }
   }
 
-  public static List<Comment> fetch_all() {
-    Statement stmt = null;
-    List<Comment> comments = new ArrayList();
-    Connection cxn = null; // Incluido por GFT AI Impact Bot
-    try {
-      cxn = Postgres.connection(); // Alterado por GFT AI Impact Bot
-      stmt = cxn.createStatement();
-
-      String query = "select * from comments;";
-      ResultSet rs = stmt.executeQuery(query);
+  public static List<Comment> fetchAll() {
+    List<Comment> comments = new ArrayList<>();
+    String query = "select * from comments;";
+    try (Connection cxn = Postgres.connection();
+         Statement stmt = cxn.createStatement();
+         ResultSet rs = stmt.executeQuery(query)) {
       while (rs.next()) {
         String id = rs.getString("id");
         String username = rs.getString("username");
         String body = rs.getString("body");
-        Timestamp created_on = rs.getTimestamp("created_on");
-        Comment c = new Comment(id, username, body, created_on);
+        Timestamp createdOn = rs.getTimestamp("created_on");
+        Comment c = new Comment(id, username, body, createdOn);
         comments.add(c);
       }
     } catch (Exception e) {
-      e.printStackTrace();
-      System.err.println(e.getClass().getName()+": "+e.getMessage());
-    } finally {
-      try {
-        if (stmt != null) stmt.close(); // Incluido por GFT AI Impact Bot
-        if (cxn != null) cxn.close(); // Incluido por GFT AI Impact Bot
-      } catch (SQLException se) {
-        se.printStackTrace();
-      }
+      LOGGER.log(Level.SEVERE, e.getClass().getName() + ": " + e.getMessage(), e);
     }
-    return comments; // Alterado por GFT AI Impact Bot
+    return comments;
   }
 
-  public static Boolean delete(String id) {
-    PreparedStatement pStatement = null; // Incluido por GFT AI Impact Bot
-    Connection con = null; // Incluido por GFT AI Impact Bot
-    try {
-      String sql = "DELETE FROM comments where id = ?";
-      con = Postgres.connection(); // Alterado por GFT AI Impact Bot
-      pStatement = con.prepareStatement(sql);
+  public static boolean delete(String id) {
+    String sql = "DELETE FROM comments where id = ?";
+    try (Connection con = Postgres.connection();
+         PreparedStatement pStatement = con.prepareStatement(sql)) {
       pStatement.setString(1, id);
-      int result = pStatement.executeUpdate(); // Alterado por GFT AI Impact Bot
-      return 1 == result; // Alterado por GFT AI Impact Bot
+      int result = pStatement.executeUpdate();
+      return result == 1;
     } catch(Exception e) {
-      e.printStackTrace();
-    } finally {
-      try {
-        if (pStatement != null) pStatement.close(); // Incluido por GFT AI Impact Bot
-        if (con != null) con.close(); // Incluido por GFT AI Impact Bot
-      } catch (SQLException se) {
-        se.printStackTrace();
-      }
+      LOGGER.log(Level.SEVERE, e.getClass().getName() + ": " + e.getMessage(), e);
     }
-    return false; // Alterado por GFT AI Impact Bot
+    return false;
   }
 
-  private Boolean commit() throws SQLException {
+  private boolean commit() throws SQLException {
     String sql = "INSERT INTO comments (id, username, body, created_on) VALUES (?,?,?,?)";
-    Connection con = Postgres.connection();
-    PreparedStatement pStatement = con.prepareStatement(sql);
-    pStatement.setString(1, this.id);
-    pStatement.setString(2, this.username);
-    pStatement.setString(3, this.body);
-    pStatement.setTimestamp(4, this.created_on);
-    Boolean result = 1 == pStatement.executeUpdate(); // Incluido por GFT AI Impact Bot
-    pStatement.close(); // Incluido por GFT AI Impact Bot
-    con.close(); // Incluido por GFT AI Impact Bot
-    return result; // Incluido por GFT AI Impact Bot
+    try (Connection con = Postgres.connection();
+         PreparedStatement pStatement = con.prepareStatement(sql)) {
+      pStatement.setString(1, this.id);
+      pStatement.setString(2, this.username);
+      pStatement.setString(3, this.body);
+      pStatement.setTimestamp(4, this.createdOn);
+      int result = pStatement.executeUpdate();
+      return result == 1;
+    }
+  }
+
+  // Accessor methods
+  public String getId() {
+    return id;
+  }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public String getBody() {
+    return body;
+  }
+
+  public Timestamp getCreatedOn() {
+    return createdOn;
+  }
+
+  // Exception classes
+  public static class BadRequest extends RuntimeException {
+    public BadRequest(String message) {
+      super(message);
+    }
+  }
+
+  public static class ServerError extends RuntimeException {
+    public ServerError(String message) {
+      super(message);
+    }
   }
 }
