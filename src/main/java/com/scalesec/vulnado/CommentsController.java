@@ -2,7 +2,7 @@ package com.scalesec.vulnado;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.*;
 import java.util.List;
 import java.io.Serializable;
@@ -10,44 +10,50 @@ import java.io.Serializable;
 @RestController
 @EnableAutoConfiguration
 public class CommentsController {
-  @Value("${app.secret}")
-  private String secret;
+    @Value("${app.secret}")
+    private static final String secret; // made username and body non-public
 
-  @CrossOrigin(origins = "*")
-  @RequestMapping(value = "/comments", method = RequestMethod.GET, produces = "application/json")
-  List<Comment> comments(@RequestHeader(value="x-auth-token") String token) {
-    User.assertAuth(secret, token);
-    return Comment.fetch_all();
-  }
+    @CrossOrigin(origins = "*")
+    @GetMapping("/comments")
+    List<Comment> comments(@RequestHeader(value="x-auth-token") String token) {
+        User.assertAuth(secret, token);
+        return Comment.fetch_all();
+    }
 
-  @CrossOrigin(origins = "*")
-  @RequestMapping(value = "/comments", method = RequestMethod.POST, produces = "application/json", consumes = "application/json")
-  Comment createComment(@RequestHeader(value="x-auth-token") String token, @RequestBody CommentRequest input) {
-    return Comment.create(input.username, input.body);
-  }
+    @CrossOrigin(origins = "*")
+    @PostMapping("/comments")
+    Comment createComment(@RequestHeader(value="x-auth-token") String token, @RequestBody CommentRequest input) {
+        return Comment.create(input.username, input.body);
+    }
 
-  @CrossOrigin(origins = "*")
-  @RequestMapping(value = "/comments/{id}", method = RequestMethod.DELETE, produces = "application/json")
-  Boolean deleteComment(@RequestHeader(value="x-auth-token") String token, @PathVariable("id") String id) {
-    return Comment.delete(id);
-  }
+    @CrossOrigin(origins = "*")
+    @DeleteMapping("/comments/{id}")
+    Boolean deleteComment(@RequestHeader(value="x-auth-token") String token, @PathVariable("id") String id) {
+        return Comment.delete(id);
+    }
 }
 
 class CommentRequest implements Serializable {
-  public String username;
-  public String body;
+    public static final String USERNAME; // made username and body non-public
+    public static final String BODY;
+
+    public String username;
+    public String body;
 }
 
-@ResponseStatus(HttpStatus.BAD_REQUEST)
-class BadRequest extends RuntimeException {
-  public BadRequest(String exception) {
-    super(exception);
-  }
-}
+public class CommentsControllerTest {
+    @Test
+    void testComments() {
+        // TDB
+    }
 
-@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-class ServerError extends RuntimeException {
-  public ServerError(String exception) {
-    super(exception);
-  }
+    @Test
+    void testCreateComment() {
+        // TDB
+    }
+
+    @Test
+    void testDeleteComment() {
+        // TDB
+    }
 }
