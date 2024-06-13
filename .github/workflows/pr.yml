@@ -1,0 +1,18 @@
+name: CodeReviewer
+
+on:
+  pull_request:
+    branches:
+      - develop
+  
+jobs:
+  build:
+    name: Run CodeFixer
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Run GFT AI Impact
+        run: |
+          gft codereview --config_path /app/gh-config.yml --pullnumber ${{ github.event.pull_request.number }}
