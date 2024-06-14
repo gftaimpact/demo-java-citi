@@ -50,11 +50,12 @@ jobs:
             TEST_FILE="src/test/java/com/scalesec/vulnado/${CLASS_NAME}Tests.java"
             FILES="--form files=@$FILE"
             if [ -f "$TEST_FILE" ]; then
-              FILES="$FILES --form ExistingTests=@$TEST_FILE"
+              TESTFILES= "--form "ExistingTests=@$TEST_FILE"
             fi
             RESPONSE=$(curl --location 'http://localhost:4000/ai/test' \
               --form "RunName=GenerateTests" \
               $FILES \
+              $TESTFILES \
               --form "jobName=GenerateTestsForPR" \
               --form "SearchPattern=*.java" \
               --form "TargetExtension=java" \
@@ -62,8 +63,7 @@ jobs:
               --form "SourceCodeLanguage=Java" \
               --form "TestType=Unit" \
               --form "TestingFrameworks=JUnit" \
-              --form "Llm=GPT_4_128k" \
-              --form "AdditionalInstructions=Generate the code in a markdown block, before the markdown, add this message: Here is the Unit Tests for ${CLASS_NAME}:")
+              --form "Llm=GPT_4_128k")
             echo "API Response: $RESPONSE"
             JOB_ID=$(echo $RESPONSE)
             echo "job_id=$JOB_ID" >> $GITHUB_ENV
