@@ -71,7 +71,7 @@ jobs:
       - name: Monitor Job Status
         id: monitor_status
         run: |
-          JOB_ID=${{ steps.send_api.outputs.job_id }}
+          JOB_ID=${{ env.job_id }}
           STATUS="Pending"
           while [[ "$STATUS" != "Completed" ]]; do
             RESPONSE=$(curl --location "http://localhost:4000/ai/jobs/$JOB_ID/status")
