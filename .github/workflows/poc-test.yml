@@ -20,8 +20,9 @@ jobs:
           
       - name: Checkout the branch
         run: |
-          git fetch origin +refs/pull/${{ github.event.pull_request.number }}/merge
-          git checkout -qf FETCH_HEAD
+          BRANCH_NAME=${{ github.event.pull_request.head.ref }}
+          git fetch origin $BRANCH_NAME:$BRANCH_NAME
+          git checkout $BRANCH_NAME
 
       - name: Identify Changed Classes
         id: changes
