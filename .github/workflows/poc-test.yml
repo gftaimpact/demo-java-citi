@@ -91,6 +91,7 @@ jobs:
             FILE_URL="http://localhost:4000${uri}"
             FILE_CONTENT=$(curl --location $FILE_URL)
             CLASS_NAME=$(echo $FILE_CONTENT | grep -oP '(?<=Here is the Unit Tests for )[^:]+')
+            CLASS_NAME=$(basename "${uri}" .java)
             TEST_FILE="src/test/java/com/scalesec/vulnado/${CLASS_NAME}Tests.java"
             echo "$FILE_CONTENT" > $TEST_FILE
           done
