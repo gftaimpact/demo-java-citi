@@ -16,6 +16,7 @@ public class Comment {
     this.username = username;
     this.body = body;
     this.created_on = created_on;
+    //comment
   }
 
   public static Comment create(String username, String body){
