@@ -6,6 +6,12 @@ on:
       - develop
     types: [opened, synchronize]
 
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  repository-projects: write
+
 jobs:
   generate_tests:
     runs-on: self-hosted
