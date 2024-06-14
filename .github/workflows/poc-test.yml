@@ -166,3 +166,7 @@ jobs:
           git add .
           git commit -m "Add generated unit tests"
           git push --set-upstream origin ${{ github.event.pull_request.head.ref }}
+    
+      - name: Run GFT AI Impact
+        run: |
+          gft codereview --config_path /app/gh-config.yml --pullnumber ${{ github.event.pull_request.number }}
