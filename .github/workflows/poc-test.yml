@@ -17,6 +17,11 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '11'
+          
+      - name: Checkout the branch
+        run: |
+          git fetch origin +refs/pull/${{ github.event.pull_request.number }}/merge
+          git checkout -qf FETCH_HEAD
 
       - name: Identify Changed Classes
         id: changes
@@ -86,16 +91,12 @@ jobs:
 
       - name: Save Generated Tests
         run: |
-          pwd
-          ls -la
           OUTPUT_URIS=${{ env.output_uris }}
           for uri in $OUTPUT_URIS; do
             FILE_URL="http://localhost:4000${uri}"
             FILE_CONTENT=$(curl --location $FILE_URL)
             CLASS_NAME=$(basename "${uri}" .java)
             TEST_FILE="src/test/java/com/scalesec/vulnado/${CLASS_NAME}Tests.java"
-            echo "$CLASS_NAME"
-            echo "$FILE_URL"
             echo "$FILE_CONTENT" > $TEST_FILE
           done
 
