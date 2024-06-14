@@ -120,7 +120,7 @@ jobs:
               --form "jobName=DemoDocCreator" \
               --form "DocumentationFormat=markdown" \
               --form "DiagramFormat=Mermaid" \
-              --form "SourceCodeLanguage=$LANGUAGE" \
+              --form "SourceCodeLanguage=Java" \
               --form "DocumentationAudience=Developer" \
               --form "PromptId=DocCreator__DocumentCode_V3" \
               --form "TargetExtension=md" \
