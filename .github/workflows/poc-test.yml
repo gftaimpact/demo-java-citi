@@ -1,0 +1,95 @@
+name: PR Tester
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, synchronize]
+
+jobs:
+  generate_tests:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Identify Changed Classes
+        id: changes
+        run: |
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          echo "Changed files: $CHANGED_FILES"
+          echo "changed_files=$CHANGED_FILES" >> $GITHUB_ENV
+
+      - name: Filter Changed Java Classes
+        id: filter_java
+        run: |
+          JAVA_FILES=$(echo "${{ env.changed_files }}" | grep 'src/main/java/.*\.java')
+          echo "Java files: $JAVA_FILES"
+          echo "java_files=$JAVA_FILES" >> $GITHUB_ENV
+
+      - name: Prepare and Send to API
+        id: send_api
+        run: |
+          for FILE in ${{ env.java_files }}; do
+            CLASS_NAME=$(basename $FILE .java)
+            TEST_FILE="src/test/java/com/scalesec/vulnado/${CLASS_NAME}Tests.java"
+            FILES="--form files=@$FILE"
+            if [ -f "$TEST_FILE" ]; then
+              FILES="$FILES --form ExistingTests=@$TEST_FILE"
+            fi
+            RESPONSE=$(curl --location 'http://localhost:4000/ai/test' \
+              --form "RunName=GenerateTests" \
+              $FILES \
+              --form "jobName=GenerateTestsForPR" \
+              --form "SearchPattern=*.java" \
+              --form "TargetExtension=java" \
+              --form "PromptId=TestCreator__CreateUnitTests_V1" \
+              --form "SourceCodeLanguage=Java" \
+              --form "TestType=Unit" \
+              --form "TestingFrameworks=JUnit" \
+              --form "Llm=GPT_4_128k" \
+              --form "AdditionalInstructions=Generate only the source code")
+            echo "API Response: $RESPONSE"
+            JOB_ID=$(echo $RESPONSE | jq -r '.job_id')
+            echo "job_id=$JOB_ID" >> $GITHUB_ENV
+          done
+
+      - name: Monitor Job Status
+        id: monitor_status
+        run: |
+          JOB_ID=${{ steps.send_api.outputs.job_id }}
+          STATUS="Pending"
+          while [[ "$STATUS" != "Completed" ]]; do
+            RESPONSE=$(curl --location "http://localhost:4000/ai/jobs/$JOB_ID/status")
+            STATUS=$(echo $RESPONSE | jq -r '.status')
+            echo "Current status: $STATUS"
+            sleep 10
+          done
+          echo "Final status: $STATUS"
+          OUTPUT_URIS=$(echo $RESPONSE | jq -r '.results[].output[].uri')
+          echo "job_response=$RESPONSE" >> $GITHUB_ENV
+          echo "output_uris=$OUTPUT_URIS" >> $GITHUB_ENV
+
+      - name: Save Generated Tests
+        run: |
+          OUTPUT_URIS=${{ env.output_uris }}
+          for uri in $OUTPUT_URIS; do
+            FILE_URL="http://localhost:4000${uri}"
+            FILE_CONTENT=$(curl --location $FILE_URL)
+            CLASS_NAME=$(echo $FILE_CONTENT | grep -oP '(?<=Here is the Unit Tests for )[^:]+')
+            TEST_FILE="src/test/java/com/scalesec/vulnado/${CLASS_NAME}Tests.java"
+            echo "$FILE_CONTENT" > $TEST_FILE
+          done
+
+      - name: Commit and Push Tests
+        run: |
+          git config --global user.name 'github-ai-impact[bot]'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/test/java/com/scalesec/vulnado/*.java
+          git commit -m "Add generated unit tests"
+          git push
