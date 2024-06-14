@@ -65,7 +65,7 @@ jobs:
               --form "Llm=GPT_4_128k" \
               --form "AdditionalInstructions=Generate the code in a markdown block, before the markdown, add this message: Here is the Unit Tests for ${CLASS_NAME}:")
             echo "API Response: $RESPONSE"
-            JOB_ID=$(echo $RESPONSE | jq -r '.job_id')
+            JOB_ID=$(echo $RESPONSE)
             echo "job_id=$JOB_ID" >> $GITHUB_ENV
           done
 
