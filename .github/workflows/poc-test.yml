@@ -23,29 +23,24 @@ jobs:
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           REPO=${{ github.repository }}
-          RESPONSE=$(curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+          CHANGED_FILES=$(curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
                             -H "Accept: application/vnd.github.v3+json" \
                             https://api.github.com/repos/${REPO}/pulls/${PR_NUMBER}/files)
-          echo "$RESPONSE" 
-          if echo "$RESPONSE" | jq -e . > /dev/null 2>&1; then
-            CHANGED_FILES=$(echo "$RESPONSE" | jq -r '.[].filename')
-          else
-            echo "Failed to fetch changed files or parse the response."
-            exit 1
-          fi
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "No changed files found."
-            exit 0
-          fi
-          echo "Changed files: $CHANGED_FILES"
-          echo "changed_files=$CHANGED_FILES" >> $GITHUB_ENV
+          echo "Changed files response: $CHANGED_FILES"
+          CHANGED_FILES=$(echo "$CHANGED_FILES" | jq -r '.[].filename')
+          echo "Changed files: $CHANGED_FILES" 
+          echo "changed_files<<EOF" >> $GITHUB_ENV
+          echo "$CHANGED_FILES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Filter Changed Java Classes
         id: filter_java
         run: |
           JAVA_FILES=$(echo "${{ env.changed_files }}" | grep 'src/main/java/.*\.java')
           echo "Java files: $JAVA_FILES"
-          echo "java_files=$JAVA_FILES" >> $GITHUB_ENV
+          echo "java_files<<EOF" >> $GITHUB_ENV
+          echo "$JAVA_FILES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Prepare and Send to API
         id: send_api
@@ -68,7 +63,7 @@ jobs:
               --form "TestType=Unit" \
               --form "TestingFrameworks=JUnit" \
               --form "Llm=GPT_4_128k" \
-              --form "AdditionalInstructions=Generate only the source code")
+              --form "AdditionalInstructions=Generate the code in a markdown block, before the markdown, add this message: Here is the Unit Tests for ${CLASS_NAME}:")
             echo "API Response: $RESPONSE"
             JOB_ID=$(echo $RESPONSE | jq -r '.job_id')
             echo "job_id=$JOB_ID" >> $GITHUB_ENV
@@ -103,7 +98,7 @@ jobs:
 
       - name: Commit and Push Tests
         run: |
-          git config --global user.name 'github-ai-impact[bot]'
+          git config --global user.name 'github-actions[bot]'
           git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/test/java/com/scalesec/vulnado/*.java
           git commit -m "Add generated unit tests"
