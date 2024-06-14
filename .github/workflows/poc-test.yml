@@ -21,7 +21,11 @@ jobs:
       - name: Identify Changed Classes
         id: changes
         run: |
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          REPO=${{ github.repository }}
+          CHANGED_FILES=$(curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+                            -H "Accept: application/vnd.github.v3+json" \
+                            https://api.github.com/repos/${REPO}/pulls/${PR_NUMBER}/files | jq -r '.[].filename')
           echo "Changed files: $CHANGED_FILES"
           echo "changed_files=$CHANGED_FILES" >> $GITHUB_ENV
 
