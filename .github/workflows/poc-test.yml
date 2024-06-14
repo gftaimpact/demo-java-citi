@@ -74,7 +74,8 @@ jobs:
               --form "SourceCodeLanguage=Java" \
               --form "TestType=Unit" \
               --form "TestingFrameworks=MSTEST,MOQ" \
-              --form "Llm=GPT_4_128k" )
+              --form "Llm=GPT_4_128k" \
+              --form "AdditionalInstructions=Generate only the source code, without any extra information")
             echo "API Response: $RESPONSE"
             JOB_ID=$(echo $RESPONSE)
             echo "job_id=$JOB_ID" >> $GITHUB_ENV
