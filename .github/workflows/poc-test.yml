@@ -46,11 +46,11 @@ jobs:
         id: send_api
         run: |
           for FILE in ${{ env.java_files }}; do
-            CLASS_NAME=$(basename $FILE .java)
+            CLASS_NAME=$(basename "$FILE" .java)
             TEST_FILE="src/test/java/com/scalesec/vulnado/${CLASS_NAME}Tests.java"
             FILES="--form files=@$FILE"
             if [ -f "$TEST_FILE" ]; then
-              TESTFILES= "--form "ExistingTests=@$TEST_FILE"
+              FILES="$FILES --form ExistingTests=@$TEST_FILE"
             fi
             RESPONSE=$(curl --location 'http://localhost:4000/ai/test' \
               --form "RunName=GenerateTests" \
@@ -61,8 +61,8 @@ jobs:
               --form "PromptId=TestCreator__CreateUnitTests_V1" \
               --form "SourceCodeLanguage=Java" \
               --form "TestType=Unit" \
-              --form "TestingFrameworks=JUnit" \
-              --form "Llm=GPT_4_128k")
+              --form "TestingFrameworks=MSTEST,MOQ" \
+              --form "Llm=GPT_4_128k" )
             echo "API Response: $RESPONSE"
             JOB_ID=$(echo $RESPONSE)
             echo "job_id=$JOB_ID" >> $GITHUB_ENV
