@@ -110,7 +110,7 @@ jobs:
       - name: Add Comment to Issue
         run: |
           COMMENT="Testes Unitários Gerados e adicionados a branch"
-          ISSUE_NUMBER=${{ github.event.issue.number }}
+          ISSUE_NUMBER=${{ github.event.pull_request.number }}
           REPO=${{ github.repository }}
           curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                -H "Accept: application/vnd.github.v3+json" \
@@ -170,7 +170,7 @@ jobs:
       - name: Add Comment to Issue
         run: |
           COMMENT="Documentação gerada e adicionada a branch"
-          ISSUE_NUMBER=${{ github.event.issue.number }}
+          ISSUE_NUMBER=${{ github.event.pull_request.number }}
           REPO=${{ github.repository }}
           curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                -H "Accept: application/vnd.github.v3+json" \
