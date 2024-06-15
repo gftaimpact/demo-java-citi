@@ -107,7 +107,16 @@ jobs:
             TEST_FILE="src/test/java/com/scalesec/vulnado/${CLASS_NAME}Tests.java"
             echo "$FILE_CONTENT" > $TEST_FILE
           done
-
+      - name: Add Comment to Issue
+        run: |
+          COMMENT="Testes Unitários Gerados e adicionados a branch"
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          REPO=${{ github.repository }}
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               -d "{\"body\": $COMMENT}" \
+               https://api.github.com/repos/$REPO/issues/$ISSUE_NUMBER/comments
+               
       - name: Prepare and Send to API
         id: send_api2
         run: |
@@ -158,11 +167,20 @@ jobs:
             echo "$FILE_CONTENT" > $TEST_FILE
           done
           
-
+      - name: Add Comment to Issue
+        run: |
+          COMMENT="Documentação gerada e adicionada a branch"
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          REPO=${{ github.repository }}
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               -d "{\"body\": $COMMENT}" \
+               https://api.github.com/repos/$REPO/issues/$ISSUE_NUMBER/comments
+               
       - name: Commit and Push Tests
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config --global user.name 'gft-ai-impact[bot]'
+          git config --global user.email 'ai-impact[bot]@gft.com'
           git add .
           git commit -m "Add generated unit tests"
           git push --set-upstream origin ${{ github.event.pull_request.head.ref }}
