@@ -68,4 +68,22 @@ public class UserTest {
 
         assertNull(user, "User should be null when user does not exist");
     }
+
+    @Test
+    public void fetch_ShouldCloseResources_WhenFinished() throws Exception {
+        String username = "testUser";
+        Connection mockConnection = mock(Connection.class);
+        Statement mockStatement = mock(Statement.class);
+        ResultSet mockResultSet = mock(ResultSet.class);
+
+        when(mockConnection.createStatement()).thenReturn(mockStatement);
+        when(mockStatement.executeQuery(anyString())).thenReturn(mockResultSet);
+        when(mockResultSet.next()).thenReturn(false);
+
+        Postgres.setConnection(mockConnection);
+        User.fetch(username);
+
+        verify(mockStatement, times(1)).close();
+        verify(mockConnection, times(1)).close();
+    }
 }
