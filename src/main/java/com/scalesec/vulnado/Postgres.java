@@ -34,7 +34,7 @@ public class Postgres {
         try {
             System.out.println("Setting up Database...");
             c = connection();
-            stmt = c.createStatement();
+            stmt = c.createStatement();//
 
             // Create Schema
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS users(user_id VARCHAR (36) PRIMARY KEY, username VARCHAR (50) UNIQUE NOT NULL, password VARCHAR (50) NOT NULL, created_on TIMESTAMP NOT NULL, last_login TIMESTAMP)");
