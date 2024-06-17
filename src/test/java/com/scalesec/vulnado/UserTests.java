@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
@@ -39,11 +40,11 @@ public class UserTest {
     public void fetch_ShouldReturnUser_WhenUserExists() throws Exception {
         String username = "testUser";
         Connection mockConnection = Mockito.mock(Connection.class);
-        Statement mockStatement = Mockito.mock(Statement.class);
+        PreparedStatement mockPreparedStatement = Mockito.mock(PreparedStatement.class);
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
 
-        when(mockConnection.createStatement()).thenReturn(mockStatement);
-        when(mockStatement.executeQuery(anyString())).thenReturn(mockResultSet);
+        when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
+        when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(true);
         when(mockResultSet.getString("user_id")).thenReturn("1");
         when(mockResultSet.getString("username")).thenReturn(username);
@@ -60,16 +61,34 @@ public class UserTest {
     public void fetch_ShouldReturnNull_WhenUserDoesNotExist() throws Exception {
         String username = "testUser";
         Connection mockConnection = Mockito.mock(Connection.class);
-        Statement mockStatement = Mockito.mock(Statement.class);
+        PreparedStatement mockPreparedStatement = Mockito.mock(PreparedStatement.class);
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
 
-        when(mockConnection.createStatement()).thenReturn(mockStatement);
-        when(mockStatement.executeQuery(anyString())).thenReturn(mockResultSet);
+        when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
+        when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(false);
 
         Postgres.setConnection(mockConnection);
         User user = User.fetch(username);
 
         assertNull(user, "User should be null when user does not exist");
+    }
+
+    @Test
+    public void fetch_ShouldCloseResources_WhenFinished() throws Exception {
+        String username = "testUser";
+        Connection mockConnection = Mockito.mock(Connection.class);
+        PreparedStatement mockPreparedStatement = Mockito.mock(PreparedStatement.class);
+        ResultSet mockResultSet = Mockito.mock(ResultSet.class);
+
+        when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
+        when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
+        when(mockResultSet.next()).thenReturn(false);
+
+        Postgres.setConnection(mockConnection);
+        User.fetch(username);
+
+        verify(mockPreparedStatement, times(1)).close();
+        verify(mockConnection, times(1)).close();
     }
 }
