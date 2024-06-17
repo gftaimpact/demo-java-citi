@@ -23,6 +23,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '11'
+
+      - run: |
+          ls -la
+          python3 /home/azureuser/pack/check2.py --java . --token ${{ secrets.GITHUB_TOKEN }} 
           
       - name: Checkout the branch
         run: |
