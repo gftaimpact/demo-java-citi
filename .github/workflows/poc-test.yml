@@ -37,6 +37,7 @@ jobs:
                -H "Accept: application/vnd.github.v3+json" \
                -d "{\"body\": \"${COMMENT}\"}" \
                https://api.github.com/repos/$REPO/issues/$ISSUE_NUMBER/comments
+          rm dependency_scan_report.md
           
       - name: Checkout the branch
         run: |
@@ -178,7 +179,7 @@ jobs:
             FILE_URL="http://localhost:4000${uri}"
             FILE_CONTENT=$(curl --location $FILE_URL)
             CLASS_NAME=$(basename "${uri}" .java)
-            TEST_FILE="wiki/src/test/java/com/scalesec/vulnado/${CLASS_NAME}.java.md"
+            TEST_FILE="wiki/src/test/java/com/scalesec/vulnado/${CLASS_NAME}"
             echo "$FILE_CONTENT" > $TEST_FILE
           done
           
