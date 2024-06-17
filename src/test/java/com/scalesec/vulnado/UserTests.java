@@ -1,7 +1,7 @@
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import java.sql.Connection;
-import java.sql.Statement;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -35,11 +35,11 @@ public class UserTest {
     public void fetch_ShouldReturnUser_WhenUserExists() throws Exception {
         String username = "testUser";
         Connection mockConnection = mock(Connection.class);
-        Statement mockStatement = mock(Statement.class);
+        PreparedStatement mockStatement = mock(PreparedStatement.class);
         ResultSet mockResultSet = mock(ResultSet.class);
 
-        when(mockConnection.createStatement()).thenReturn(mockStatement);
-        when(mockStatement.executeQuery(anyString())).thenReturn(mockResultSet);
+        when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
+        when(mockStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(true);
         when(mockResultSet.getString("user_id")).thenReturn("1");
         when(mockResultSet.getString("username")).thenReturn(username);
@@ -56,11 +56,11 @@ public class UserTest {
     public void fetch_ShouldReturnNull_WhenUserDoesNotExist() throws Exception {
         String username = "testUser";
         Connection mockConnection = mock(Connection.class);
-        Statement mockStatement = mock(Statement.class);
+        PreparedStatement mockStatement = mock(PreparedStatement.class);
         ResultSet mockResultSet = mock(ResultSet.class);
 
-        when(mockConnection.createStatement()).thenReturn(mockStatement);
-        when(mockStatement.executeQuery(anyString())).thenReturn(mockResultSet);
+        when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
+        when(mockStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(false);
 
         Postgres.setConnection(mockConnection);
