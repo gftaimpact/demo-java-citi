@@ -8,40 +8,48 @@ O código é responsável pelo gerenciamento de usuários em um sistema, incluin
 graph TD
     A[User] --> B["token(secret)"]
     A --> C["assertAuth(secret, token)"]
-    A --> D["fetch(username)"]
-    B --> E["Gera token JWT"]
-    C --> F["Verifica token JWT"]
-    D --> G["Busca usuário no banco de dados"]
+    A --> D["fetch(un)"]
+    B --> E["Jwts.builder()"]
+    C --> F["Jwts.parserBuilder()"]
+    D --> G["Postgres.connection()"]
+    G --> H["SELECT * FROM users"]
 ```
 
 ## Insights
 - A classe `User` possui três atributos: `id`, `username` e `hashedPassword`.
-- A classe `User` possui três métodos principais: `token`, `assertAuth` e `fetch`.
-- O método `token` gera um token JWT para o usuário.
-- O método `assertAuth` verifica a autenticidade de um token JWT.
-- O método `fetch` recupera um usuário do banco de dados PostgreSQL.
-- A senha do usuário é armazenada como um hash.
+- A classe `User` possui três métodos: `token()`, `assertAuth()` e `fetch()`.
+- O método `token()` gera um token JWT para o usuário.
+- O método `assertAuth()` verifica se um token JWT é válido.
+- O método `fetch()` recupera um usuário do banco de dados PostgreSQL.
+- A classe `User` interage com a biblioteca `io.jsonwebtoken` para gerar e verificar tokens JWT.
+- A classe `User` interage com a classe `Postgres` para estabelecer uma conexão com o banco de dados.
 
 ## Dependências
 ```mermaid
 graph LR
     User.java --- |"Usa"| io.jsonwebtoken.Jwts
-    User.java --- |"Usa"| io.jsonwebtoken.JwtParser
     User.java --- |"Usa"| io.jsonwebtoken.SignatureAlgorithm
     User.java --- |"Usa"| io.jsonwebtoken.security.Keys
     User.java --- |"Usa"| javax.crypto.SecretKey
-    User.java --- |"Acessa"| Postgres
+    User.java --- |"Usa"| java.sql.Connection
+    User.java --- |"Usa"| java.sql.PreparedStatement
+    User.java --- |"Usa"| java.sql.ResultSet
+    User.java --- |"Usa"| com.scalesec.vulnado.Postgres
 ```
-- `io.jsonwebtoken.Jwts` : Usado para construir e verificar tokens JWT.
-- `io.jsonwebtoken.JwtParser` : Usado para analisar tokens JWT.
+- `io.jsonwebtoken.Jwts` : Usado para construir e analisar tokens JWT.
 - `io.jsonwebtoken.SignatureAlgorithm` : Usado para definir o algoritmo de assinatura para o token JWT.
-- `io.jsonwebtoken.security.Keys` : Usado para gerar a chave de assinatura para o token JWT.
-- `javax.crypto.SecretKey` : Usado para representar a chave de assinatura para o token JWT.
-- `Postgres` : Classe que fornece a conexão com o banco de dados PostgreSQL.
-
-## Vulnerabilidades
-- O método `fetch` está vulnerável a ataques de injeção SQL, pois a consulta SQL é construída concatenando diretamente a entrada do usuário (`un`), sem qualquer sanitização ou uso de consultas preparadas.
-- O método `assertAuth` imprime a pilha de exceções completa quando ocorre uma falha de autenticação. Isso pode expor detalhes sensíveis do sistema e facilitar ataques.
+- `io.jsonwebtoken.security.Keys` : Usado para gerar uma chave secreta para assinar o token JWT.
+- `javax.crypto.SecretKey` : Usado para representar a chave secreta usada na assinatura do token JWT.
+- `java.sql.Connection` : Usado para estabelecer uma conexão com o banco de dados.
+- `java.sql.PreparedStatement` : Usado para preparar e executar a consulta SQL.
+- `java.sql.ResultSet` : Usado para armazenar o resultado da consulta SQL.
+- `com.scalesec.vulnado.Postgres` : Usado para estabelecer uma conexão com o banco de dados PostgreSQL.
 
 ## Manipulação de Dados (SQL)
-- `users`: A tabela `users` é acessada para recuperar informações do usuário. A operação SQL realizada é SELECT.
+- `users`: A tabela `users` é consultada para recuperar um usuário com base no nome de usuário. A operação SQL realizada é SELECT.
+
+## Vulnerabilidades
+- O código não implementa nenhum mecanismo de hashing ou salting para senhas, o que é uma prática de segurança recomendada. Isso pode levar a vulnerabilidades se as senhas dos usuários forem expostas.
+- O código não implementa nenhum mecanismo para lidar com tentativas de injeção SQL. Isso pode levar a vulnerabilidades de injeção SQL.
+- O código não implementa nenhum mecanismo para lidar com erros de conexão com o banco de dados. Isso pode levar a interrupções do serviço se a conexão com o banco de dados for perdida.
+- O código não implementa nenhum mecanismo para lidar com tokens JWT inválidos ou expirados. Isso pode levar a vulnerabilidades de autenticação.
