@@ -33,22 +33,36 @@ public class User {
   }
 
   public static User fetch(String un) {
-    String query = "SELECT * FROM users WHERE username = ? LIMIT 1";
-    try (Connection cxn = Postgres.connection();
-         PreparedStatement stmt = cxn.prepareStatement(query)) {
-      
-      stmt.setString(1, un);
-      try (ResultSet rs = stmt.executeQuery()) {
-        if (rs.next()) {
-          String user_id = rs.getString("user_id");
-          String username = rs.getString("username");
-          String password = rs.getString("password");
-          return new User(user_id, username, password);
-        }
+
+    Statement stmt = null;
+    User user = null;
+    Connection cxn = null; 
+    try {
+      cxn = Postgres.connection(); 
+      stmt = cxn.createStatement();
+      System.out.println("Opened database successfully");
+
+      String query = "select * from users where username = '" + un + "' limit 1";
+      System.out.println(query);
+      ResultSet rs = stmt.executeQuery(query);
+      if (rs.next()) {
+        String user_id = rs.getString("user_id");
+        String username = rs.getString("username");
+        String password = rs.getString("password");
+        user = new User(user_id, username, password);
       }
-    } catch (SQLException e) {
-      System.err.println("Database error: " + e.getMessage());
-    }
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println(e.getClass().getName()+": "+e.getMessage());
+      return null; 
+    } finally {
+      try {
+        if (stmt != null) stmt.close(); 
+        if (cxn != null) cxn.close(); 
+      } catch (Exception e) {
+        e.printStackTrace();
+
     return null;
+
   }
 }
