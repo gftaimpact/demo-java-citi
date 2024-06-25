@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.ResultSet;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -71,5 +71,18 @@ public class UserTest {
         User user = User.fetch(username);
 
         assertNull(user, "User should be null when user does not exist");
+    }
+
+    @Test
+    public void constructor_ShouldCreateUser_WhenParametersAreValid() {
+        String id = "1";
+        String username = "testUser";
+        String hashedPassword = "hashedPassword";
+        User user = new User(id, username, hashedPassword);
+
+        assertNotNull(user, "User should not be null");
+        assertEquals(id, user.id, "ID should match");
+        assertEquals(username, user.username, "Username should match");
+        assertEquals(hashedPassword, user.hashedPassword, "Hashed password should match");
     }
 }
