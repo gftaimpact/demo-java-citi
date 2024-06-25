@@ -6,42 +6,38 @@ O código é responsável pelo gerenciamento de usuários em um sistema, incluin
 ## Fluxo do Processo
 ```mermaid
 graph TD
-    A[User] --> B["token(secret)"]
-    A --> C["assertAuth(secret, token)"]
-    A --> D["fetch(username)"]
-    B --> E["Gera token JWT"]
-    C --> F["Verifica token JWT"]
-    D --> G["Busca usuário no banco de dados"]
+  User --> |"Instanciação"| User_Object["User(id, username, hashedPassword)"]
+  User_Object --> |"Gera token JWT"| token_method["token(secret)"]
+  User_Object --> |"Verifica autenticação"| assertAuth_method["assertAuth(secret, token)"]
+  User --> |"Busca usuário no banco de dados"| fetch_method["fetch(username)"]
 ```
 
 ## Insights
-- A classe `User` possui três atributos: `id`, `username` e `hashedPassword`.
-- A classe `User` possui três métodos principais: `token`, `assertAuth` e `fetch`.
-- O método `token` gera um token JWT para o usuário.
-- O método `assertAuth` verifica a autenticidade de um token JWT.
-- O método `fetch` recupera um usuário do banco de dados PostgreSQL.
-- A senha do usuário é armazenada como um hash.
+- A classe `User` representa um usuário no sistema, com atributos para `id`, `username` e `hashedPassword`.
+- O método `token` gera um token JWT para o usuário, que pode ser usado para autenticação.
+- O método `assertAuth` verifica se um token JWT é válido.
+- O método `fetch` busca um usuário no banco de dados PostgreSQL pelo nome de usuário.
 
 ## Dependências
+O código depende das seguintes bibliotecas externas:
+- `java.sql`: para conexão com o banco de dados e execução de consultas SQL.
+- `io.jsonwebtoken`: para geração e verificação de tokens JWT.
+
 ```mermaid
 graph LR
-    User.java --- |"Usa"| io.jsonwebtoken.Jwts
-    User.java --- |"Usa"| io.jsonwebtoken.JwtParser
-    User.java --- |"Usa"| io.jsonwebtoken.SignatureAlgorithm
-    User.java --- |"Usa"| io.jsonwebtoken.security.Keys
-    User.java --- |"Usa"| javax.crypto.SecretKey
-    User.java --- |"Acessa"| Postgres
+  User.java --- |"Usa"| java_sql["java.sql"]
+  User.java --- |"Usa"| io_jsonwebtoken["io.jsonwebtoken"]
 ```
-- `io.jsonwebtoken.Jwts` : Usado para construir e verificar tokens JWT.
-- `io.jsonwebtoken.JwtParser` : Usado para analisar tokens JWT.
-- `io.jsonwebtoken.SignatureAlgorithm` : Usado para definir o algoritmo de assinatura para o token JWT.
-- `io.jsonwebtoken.security.Keys` : Usado para gerar a chave de assinatura para o token JWT.
-- `javax.crypto.SecretKey` : Usado para representar a chave de assinatura para o token JWT.
-- `Postgres` : Classe que fornece a conexão com o banco de dados PostgreSQL.
 
-## Vulnerabilidades
-- O método `fetch` está vulnerável a ataques de injeção SQL, pois a consulta SQL é construída concatenando diretamente a entrada do usuário (`un`), sem qualquer sanitização ou uso de consultas preparadas.
-- O método `assertAuth` imprime a pilha de exceções completa quando ocorre uma falha de autenticação. Isso pode expor detalhes sensíveis do sistema e facilitar ataques.
+- `java.sql`: Usado para estabelecer uma conexão com o banco de dados PostgreSQL e executar consultas SQL.
+- `io.jsonwebtoken`: Usado para gerar e verificar tokens JWT para autenticação de usuários.
 
 ## Manipulação de Dados (SQL)
-- `users`: A tabela `users` é acessada para recuperar informações do usuário. A operação SQL realizada é SELECT.
+O código executa uma consulta SQL para buscar um usuário no banco de dados PostgreSQL. A tabela `users` é consultada e os dados do usuário são recuperados com base no nome de usuário.
+
+- `users`: A consulta SQL seleciona todos os campos de um usuário onde o nome de usuário corresponde ao fornecido. A consulta é limitada a um resultado.
+
+## Vulnerabilidades
+- O método `fetch` está vulnerável a ataques de injeção SQL, pois a consulta SQL é construída concatenando diretamente a entrada do usuário. Um usuário mal-intencionado pode fornecer uma entrada que altera a consulta SQL de maneiras indesejadas.
+- O código não verifica se a consulta SQL no método `fetch` retorna um resultado antes de tentar usar esse resultado. Isso pode levar a exceções em tempo de execução se a consulta não retornar nenhum resultado.
+- O código não trata adequadamente as exceções. Ele simplesmente imprime a pilha de rastreamento e continua a execução. Isso pode levar a comportamentos inesperados e dificultar a depuração.
