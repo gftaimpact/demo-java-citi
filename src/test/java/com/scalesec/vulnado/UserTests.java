@@ -72,4 +72,17 @@ public class UserTest {
 
         assertNull(user, "User should be null when user does not exist");
     }
+
+    @Test
+    public void constructor_ShouldCreateUser_WhenParametersAreValid() {
+        String id = "1";
+        String username = "testUser";
+        String hashedPassword = "hashedPassword";
+        User user = new User(id, username, hashedPassword);
+
+        assertNotNull(user, "User should not be null");
+        assertEquals(id, user.id, "User id should match");
+        assertEquals(username, user.username, "Username should match");
+        assertEquals(hashedPassword, user.hashedPassword, "Hashed password should match");
+    }
 }

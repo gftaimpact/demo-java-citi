@@ -8,7 +8,7 @@ O código é responsável pelo gerenciamento de usuários em um sistema, incluin
 graph TD
     A[User] --> B["token(secret)"]
     A --> C["assertAuth(secret, token)"]
-    A --> D["fetch(username)"]
+    A --> D["fetch(un)"]
     B --> E["Gera token JWT"]
     C --> F["Verifica token JWT"]
     D --> G["Busca usuário no banco de dados"]
@@ -20,7 +20,7 @@ graph TD
 - O método `token` gera um token JWT para o usuário.
 - O método `assertAuth` verifica a autenticidade de um token JWT.
 - O método `fetch` recupera um usuário do banco de dados PostgreSQL.
-- A senha do usuário é armazenada como um hash.
+- O método `fetch` é vulnerável a ataques de injeção SQL, pois a entrada do usuário é inserida diretamente na consulta SQL.
 
 ## Dependências
 ```mermaid
@@ -34,14 +34,13 @@ graph LR
 ```
 - `io.jsonwebtoken.Jwts` : Usado para construir e verificar tokens JWT.
 - `io.jsonwebtoken.JwtParser` : Usado para analisar tokens JWT.
-- `io.jsonwebtoken.SignatureAlgorithm` : Usado para definir o algoritmo de assinatura para o token JWT.
-- `io.jsonwebtoken.security.Keys` : Usado para gerar a chave de assinatura para o token JWT.
-- `javax.crypto.SecretKey` : Usado para representar a chave de assinatura para o token JWT.
-- `Postgres` : Classe que fornece a conexão com o banco de dados PostgreSQL.
-
-## Vulnerabilidades
-- O método `fetch` está vulnerável a ataques de injeção SQL, pois a consulta SQL é construída concatenando diretamente a entrada do usuário (`un`), sem qualquer sanitização ou uso de consultas preparadas.
-- O método `assertAuth` imprime a pilha de exceções completa quando ocorre uma falha de autenticação. Isso pode expor detalhes sensíveis do sistema e facilitar ataques.
+- `io.jsonwebtoken.SignatureAlgorithm` : Usado para definir o algoritmo de assinatura para tokens JWT.
+- `io.jsonwebtoken.security.Keys` : Usado para gerar chaves secretas para tokens JWT.
+- `javax.crypto.SecretKey` : Usado para representar chaves secretas para tokens JWT.
+- `Postgres` : Classe que fornece conexão com o banco de dados PostgreSQL.
 
 ## Manipulação de Dados (SQL)
 - `users`: A tabela `users` é acessada para recuperar informações do usuário. A operação SQL realizada é SELECT.
+
+## Vulnerabilidades
+- Injeção SQL: O método `fetch` é vulnerável a ataques de injeção SQL, pois a entrada do usuário é inserida diretamente na consulta SQL sem qualquer forma de sanitização ou parametrização. Isso pode permitir que um atacante execute consultas SQL arbitrárias.
