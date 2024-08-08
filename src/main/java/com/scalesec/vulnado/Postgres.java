@@ -1,19 +1,26 @@
 package com.scalesec.vulnado;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import java.sql.DriverManager;  
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Postgres {
 
+    private static final Logger logger = LogManager.getLogger(Postgres.class);
+    
+    private Postgres() {
+        // private constructor to avoid instantiation
+    }
+
     public static Connection connection() {
         try {
-            Class.forName("org.postgresql.Driver");
             String url = new StringBuilder()
                     .append("jdbc:postgresql://")
                     .append(System.getenv("PGHOST"))
@@ -22,17 +29,17 @@ public class Postgres {
             return DriverManager.getConnection(url,
                     System.getenv("PGUSER"), System.getenv("PGPASSWORD"));
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println(e.getClass().getName()+": "+e.getMessage());
+            logger.error(e.getMessage(), e);
             System.exit(1);
         }
         return null;
     }
+    
     public static void setup(){
         Connection c = null;
         Statement stmt = null;
         try {
-            System.out.println("Setting up Database...");
+            logger.info("Setting up Database...");
             c = connection();
             stmt = c.createStatement();
 
@@ -41,7 +48,7 @@ public class Postgres {
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS comments(id VARCHAR (36) PRIMARY KEY, username VARCHAR (36), body VARCHAR (500), created_on TIMESTAMP NOT NULL)");
 
             // Clean up any existing data
-            stmt.executeUpdate("DELETE FROM users");
+            stmt.executeUpdate("DELETE FROM users"); 
             stmt.executeUpdate("DELETE FROM comments");
 
             // Insert seed data
@@ -54,89 +61,72 @@ public class Postgres {
             insertComment("rick", "cool dog m8");
             insertComment("alice", "OMG so cute!");
         } catch (Exception e) {
-            System.out.println(e);
+            logger.error(e.getMessage(), e);
             System.exit(1);
         } finally {
             try {
-                if (stmt != null) stmt.close(); // Alterado por GFT AI Impact Bot
-                if (c != null) c.close(); // Alterado por GFT AI Impact Bot
+                if (stmt != null) stmt.close();
+                if (c != null) c.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e.getMessage(), e);
             }
         }
     }
 
-    // Java program to calculate MD5 hash value
-    public static String md5(String input)
-    {
-        try {
-
-            // Static getInstance method is called with hashing MD5
-            MessageDigest md = MessageDigest.getInstance("MD5");
-
-            // digest() method is called to calculate message digest
-            //  of an input digest() return array of byte
-            byte[] messageDigest = md.digest(input.getBytes());
-
-            // Convert byte array into signum representation
-            BigInteger no = new BigInteger(1, messageDigest);
-
-            // Convert message digest into hex value
-            String hashtext = no.toString(16);
-            while (hashtext.length() < 32) {
-                hashtext = "0" + hashtext;
-            }
-            return hashtext;
+    // Use a stronger hashing algorithm
+    public static String hash(String input) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte[] digest = md.digest(input.getBytes());
+        BigInteger hashed = new BigInteger(1, digest);  
+        String hashtext = hashed.toString(16);
+        while(hashtext.length() < 64) {
+            hashtext = "0" + hashtext; 
         }
-
-        // For specifying wrong message digest algorithms
-        catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        return hashtext;
     }
 
     private static void insertUser(String username, String password) {
        String sql = "INSERT INTO users (user_id, username, password, created_on) VALUES (?, ?, ?, current_timestamp)";
-       Connection c = null; // Incluido por GFT AI Impact Bot
+       Connection c = null;
        PreparedStatement pStatement = null;
        try {
-          c = connection(); // Alterado por GFT AI Impact Bot
+          c = connection();
           pStatement = c.prepareStatement(sql);
           pStatement.setString(1, UUID.randomUUID().toString());
           pStatement.setString(2, username);
-          pStatement.setString(3, md5(password));
+          pStatement.setString(3, hash(password));
           pStatement.executeUpdate();
        } catch(Exception e) {
-         e.printStackTrace();
+         logger.error(e.getMessage(), e);
        } finally {
            try {
-               if (pStatement != null) pStatement.close(); // Incluido por GFT AI Impact Bot
-               if (c != null) c.close(); // Incluido por GFT AI Impact Bot
+               if (pStatement != null) pStatement.close();
+               if (c != null) c.close();
            } catch (Exception e) {
-               e.printStackTrace();
+               logger.error(e.getMessage(), e);
            }
        }
     }
 
     private static void insertComment(String username, String body) {
         String sql = "INSERT INTO comments (id, username, body, created_on) VALUES (?, ?, ?, current_timestamp)";
-        Connection c = null; // Incluido por GFT AI Impact Bot
+        Connection c = null;
         PreparedStatement pStatement = null;
         try {
-            c = connection(); // Alterado por GFT AI Impact Bot
+            c = connection();
             pStatement = c.prepareStatement(sql);
             pStatement.setString(1, UUID.randomUUID().toString());
             pStatement.setString(2, username);
             pStatement.setString(3, body);
             pStatement.executeUpdate();
         } catch(Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         } finally {
             try {
-                if (pStatement != null) pStatement.close(); // Incluido por GFT AI Impact Bot
-                if (c != null) c.close(); // Incluido por GFT AI Impact Bot
+                if (pStatement != null) pStatement.close();
+                if (c != null) c.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e.getMessage(), e);
             }
         }
     }
