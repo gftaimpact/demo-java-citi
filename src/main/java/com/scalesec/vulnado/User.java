@@ -3,14 +3,19 @@ package com.scalesec.vulnado;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.ResultSet;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import javax.crypto.SecretKey;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
 public class User {
-  public String id, username, hashedPassword;
+
+  private static final String ID = "id";
+  private static final String USERNAME = "username";
+  private static final String HASHED_PASSWORD = "hashedPassword";
+  
+  private String id;
+  private String username;
+  private String hashedPassword;
 
   public User(String id, String username, String hashedPassword) {
     this.id = id;
@@ -20,8 +25,7 @@ public class User {
 
   public String token(String secret) {
     SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
-    String jws = Jwts.builder().setSubject(this.username).signWith(key).compact();
-    return jws;
+    return Jwts.builder().setSubject(this.username).signWith(key).compact();
   }
 
   public static void assertAuth(String secret, String token) {
@@ -31,41 +35,41 @@ public class User {
         .setSigningKey(key)
         .parseClaimsJws(token);
     } catch(Exception e) {
-      e.printStackTrace();
+      logger.error("Unauthorized", e);
       throw new Unauthorized(e.getMessage());
     }
   }
 
-  public static User fetch(String un) {
-    Statement stmt = null;
+  public static User fetch(String username) {
+    Statement statement = null; 
     User user = null;
-    Connection cxn = null; // Incluido por GFT AI Impact Bot
+    Connection connection = null;
     try {
-      cxn = Postgres.connection(); // Alterado por GFT AI Impact Bot
-      stmt = cxn.createStatement();
-      System.out.println("Opened database successfully");
+      connection = Postgres.connection();
+      statement = connection.createStatement();
+      logger.info("Opened database successfully");
 
-      String query = "select * from users where username = '" + un + "' limit 1";
-      System.out.println(query);
-      ResultSet rs = stmt.executeQuery(query);
-      if (rs.next()) {
-        String user_id = rs.getString("user_id");
-        String username = rs.getString("username");
-        String password = rs.getString("password");
-        user = new User(user_id, username, password);
+      String query = "SELECT * FROM users WHERE username = ? LIMIT 1";
+      PreparedStatement prepStmt = connection.prepareStatement(query);
+      prepStmt.setString(1, username);
+      ResultSet resultSet = prepStmt.executeQuery();
+      if (resultSet.next()) {
+        String userId = resultSet.getString("user_id");
+        String userUsername = resultSet.getString("username");
+        String password = resultSet.getString("password");
+        user = new User(userId, userUsername, password);
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-      System.err.println(e.getClass().getName()+": "+e.getMessage());
-      return null; // Alterado por GFT AI Impact Bot
+    } catch (Exception exception) {
+      logger.error(exception.getMessage(), exception);
+      return null;
     } finally {
       try {
-        if (stmt != null) stmt.close(); // Incluido por GFT AI Impact Bot
-        if (cxn != null) cxn.close(); // Incluido por GFT AI Impact Bot
-      } catch (Exception e) {
-        e.printStackTrace();
+        if (statement != null) statement.close();
+        if (connection != null) connection.close();
+      } catch (Exception exception) {
+        logger.error(exception.getMessage(), exception);
       }
     }
-    return user; // Alterado por GFT AI Impact Bot
+    return user;
   }
 }
