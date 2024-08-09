@@ -1,7 +1,7 @@
 package com.scalesec.vulnado;
 
 import java.sql.Connection;
-import java.sql.Statement;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtParser;
@@ -20,52 +20,34 @@ public class User {
 
   public String token(String secret) {
     SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
-    String jws = Jwts.builder().setSubject(this.username).signWith(key).compact();
-    return jws;
+    return Jwts.builder().setSubject(this.username).signWith(key).compact();
   }
 
   public static void assertAuth(String secret, String token) {
     try {
       SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
-      Jwts.parser()
-        .setSigningKey(key)
-        .parseClaimsJws(token);
+      Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
     } catch(Exception e) {
-      e.printStackTrace();
-      throw new Unauthorized(e.getMessage());
+      throw new Unauthorized("Invalid token");
     }
   }
 
-  public static User fetch(String un) {
-    Statement stmt = null;
-    User user = null;
-    Connection cxn = null; 
-    try {
-      cxn = Postgres.connection(); 
-      stmt = cxn.createStatement();
-      System.out.println("Opened database successfully");
-
-      String query = "select * from users where username = '" + un + "' limit 1";
-      System.out.println(query);
-      ResultSet rs = stmt.executeQuery(query);
+  public static User fetch(String username) {
+    String query = "SELECT user_id, username, password FROM users WHERE username = ? LIMIT 1";
+    try (Connection cxn = Postgres.connection(); 
+         PreparedStatement stmt = cxn.prepareStatement(query)) {
+         
+      stmt.setString(1, username);
+      ResultSet rs = stmt.executeQuery();
       if (rs.next()) {
         String user_id = rs.getString("user_id");
-        String username = rs.getString("username");
+        String user_name = rs.getString("username");
         String password = rs.getString("password");
-        user = new User(user_id, username, password);
+        return new User(user_id, user_name, password);
       }
     } catch (Exception e) {
-      e.printStackTrace();
-      System.err.println(e.getClass().getName()+": "+e.getMessage());
-      return null; 
-    } finally {
-      try {
-        if (stmt != null) stmt.close(); 
-        if (cxn != null) cxn.close(); 
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      throw new RuntimeException("Error fetching user", e);
     }
-    return user; 
+    return null; 
   }
 }
