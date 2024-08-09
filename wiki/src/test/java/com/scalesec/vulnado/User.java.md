@@ -1,47 +1,69 @@
 # User.java: Gerenciamento de Usuários
 
 ## Visão Geral
-O código é responsável pelo gerenciamento de usuários em um sistema, incluindo a criação de tokens de autenticação, verificação de autenticação e recuperação de informações do usuário a partir de um banco de dados PostgreSQL.
+O código é responsável pelo gerenciamento de usuários em um sistema. Ele fornece funcionalidades para autenticação de usuários, geração de tokens JWT, e busca de usuários no banco de dados.
 
 ## Fluxo do Processo
+
 ```mermaid
 graph TD
-    A[User] --> B["token(secret)"]
-    A --> C["assertAuth(secret, token)"]
-    A --> D["fetch(username)"]
-    B --> E["Gera token JWT"]
-    C --> F["Verifica token JWT"]
-    D --> G["Busca usuário no banco de dados"]
+    A["User.java"]
+    A --> B["User(String id, String username, String hashedPassword)"]
+    A --> C["token(String secret)"]
+    A --> D["assertAuth(String secret, String token)"]
+    A --> E["fetch(String username)"]
 ```
 
 ## Insights
 - A classe `User` possui três atributos: `id`, `username` e `hashedPassword`.
-- A classe `User` possui três métodos principais: `token`, `assertAuth` e `fetch`.
-- O método `token` gera um token JWT para o usuário.
-- O método `assertAuth` verifica a autenticidade de um token JWT.
-- O método `fetch` recupera um usuário do banco de dados PostgreSQL.
-- A senha do usuário é armazenada como um hash.
+- O método `token(String secret)` gera um token JWT para o usuário.
+- O método `assertAuth(String secret, String token)` verifica a autenticidade de um token JWT.
+- O método `fetch(String username)` busca um usuário no banco de dados Postgres.
 
 ## Dependências
+O código depende das seguintes bibliotecas externas:
+- `java.sql.Connection`
+- `java.sql.PreparedStatement`
+- `java.sql.ResultSet`
+- `io.jsonwebtoken.Jwts`
+- `io.jsonwebtoken.JwtParser`
+- `io.jsonwebtoken.SignatureAlgorithm`
+- `io.jsonwebtoken.security.Keys`
+- `javax.crypto.SecretKey`
+
 ```mermaid
 graph LR
+    User.java --- |"Usa"| java.sql.Connection
+    User.java --- |"Usa"| java.sql.PreparedStatement
+    User.java --- |"Usa"| java.sql.ResultSet
     User.java --- |"Usa"| io.jsonwebtoken.Jwts
     User.java --- |"Usa"| io.jsonwebtoken.JwtParser
     User.java --- |"Usa"| io.jsonwebtoken.SignatureAlgorithm
     User.java --- |"Usa"| io.jsonwebtoken.security.Keys
     User.java --- |"Usa"| javax.crypto.SecretKey
-    User.java --- |"Acessa"| Postgres
 ```
-- `io.jsonwebtoken.Jwts` : Usado para construir e verificar tokens JWT.
-- `io.jsonwebtoken.JwtParser` : Usado para analisar tokens JWT.
-- `io.jsonwebtoken.SignatureAlgorithm` : Usado para definir o algoritmo de assinatura para o token JWT.
-- `io.jsonwebtoken.security.Keys` : Usado para gerar a chave de assinatura para o token JWT.
-- `javax.crypto.SecretKey` : Usado para representar a chave de assinatura para o token JWT.
-- `Postgres` : Classe que fornece a conexão com o banco de dados PostgreSQL.
 
-## Vulnerabilidades
-- O método `fetch` está vulnerável a ataques de injeção SQL, pois a consulta SQL é construída concatenando diretamente a entrada do usuário (`un`), sem qualquer sanitização ou uso de consultas preparadas.
-- O método `assertAuth` imprime a pilha de exceções completa quando ocorre uma falha de autenticação. Isso pode expor detalhes sensíveis do sistema e facilitar ataques.
+- `java.sql.Connection` : Usado para estabelecer uma conexão com o banco de dados Postgres.
+- `java.sql.PreparedStatement` : Usado para preparar e executar consultas SQL.
+- `java.sql.ResultSet` : Usado para armazenar o resultado de uma consulta SQL.
+- `io.jsonwebtoken.Jwts` : Usado para construir e validar tokens JWT.
+- `io.jsonwebtoken.JwtParser` : Usado para analisar tokens JWT.
+- `io.jsonwebtoken.SignatureAlgorithm` : Usado para definir o algoritmo de assinatura para tokens JWT.
+- `io.jsonwebtoken.security.Keys` : Usado para gerar chaves secretas para tokens JWT.
+- `javax.crypto.SecretKey` : Usado para representar uma chave secreta.
 
 ## Manipulação de Dados (SQL)
-- `users`: A tabela `users` é acessada para recuperar informações do usuário. A operação SQL realizada é SELECT.
+A estrutura da tabela `users` manipulada pelo código é a seguinte:
+
+| Nome do Atributo | Tipo de Dados | Descrição |
+|------------------|---------------|-----------|
+| user_id          | String        | ID do usuário |
+| username         | String        | Nome de usuário |
+| password         | String        | Senha do usuário (criptografada) |
+
+- `users`: A tabela `users` é consultada para buscar um usuário pelo nome de usuário.
+
+## Vulnerabilidades
+- O código não implementa nenhum mecanismo de hashing ou salting para senhas, o que pode levar a vulnerabilidades de segurança se as senhas dos usuários forem comprometidas.
+- O código não implementa nenhum mecanismo para lidar com tentativas de injeção SQL, o que pode levar a vulnerabilidades de segurança.
+- O código não implementa nenhum mecanismo para lidar com usuários não encontrados, o que pode levar a erros de tempo de execução.
