@@ -1,47 +1,46 @@
-# User.java: Gerenciamento de Usuários
+# User.java: Gerenciamento de Usuários e Autenticação
 
 ## Visão Geral
-O código é responsável pelo gerenciamento de usuários em um sistema, incluindo a criação de tokens de autenticação, verificação de autenticação e recuperação de informações do usuário a partir de um banco de dados PostgreSQL.
+O código em questão é responsável pelo gerenciamento de usuários e autenticação em uma aplicação Java. Ele define a estrutura de dados para um usuário e fornece métodos para gerar tokens de autenticação, validar tokens e buscar usuários em um banco de dados PostgreSQL.
 
 ## Fluxo do Processo
+
 ```mermaid
 graph TD
-    A[User] --> B["token(secret)"]
-    A --> C["assertAuth(secret, token)"]
-    A --> D["fetch(username)"]
-    B --> E["Gera token JWT"]
-    C --> F["Verifica token JWT"]
-    D --> G["Busca usuário no banco de dados"]
+    A["User()"] --> B["token()"]
+    A --> C["assertAuth()"]
+    A --> D["fetch()"]
+    B --> E["Keys.hmacShaKeyFor()"]
+    B --> F["Jwts.builder()"]
+    C --> G["Keys.hmacShaKeyFor()"]
+    C --> H["Jwts.parserBuilder()"]
+    D --> I["Postgres.connection()"]
+    D --> J["cxn.prepareStatement()"]
+    D --> K["pstmt.setString()"]
+    D --> L["pstmt.executeQuery()"]
 ```
 
 ## Insights
-- A classe `User` possui três atributos: `id`, `username` e `hashedPassword`.
-- A classe `User` possui três métodos principais: `token`, `assertAuth` e `fetch`.
-- O método `token` gera um token JWT para o usuário.
-- O método `assertAuth` verifica a autenticidade de um token JWT.
-- O método `fetch` recupera um usuário do banco de dados PostgreSQL.
-- A senha do usuário é armazenada como um hash.
+- A classe `User` define a estrutura de dados para um usuário, que inclui um `id`, `username` e `hashedPassword`.
+- O método `token()` é usado para gerar um token de autenticação JWT para o usuário. Ele usa a biblioteca `Jwts` para construir o token.
+- O método `assertAuth()` é usado para validar um token de autenticação JWT. Ele também usa a biblioteca `Jwts` para analisar o token.
+- O método `fetch()` é usado para buscar um usuário do banco de dados PostgreSQL. Ele usa a classe `Postgres` para estabelecer uma conexão com o banco de dados e executar a consulta SQL.
 
 ## Dependências
 ```mermaid
 graph LR
-    User.java --- |"Usa"| io.jsonwebtoken.Jwts
-    User.java --- |"Usa"| io.jsonwebtoken.JwtParser
-    User.java --- |"Usa"| io.jsonwebtoken.SignatureAlgorithm
-    User.java --- |"Usa"| io.jsonwebtoken.security.Keys
-    User.java --- |"Usa"| javax.crypto.SecretKey
-    User.java --- |"Acessa"| Postgres
+    User.java --- |"Usa"| Keys
+    User.java --- |"Usa"| Jwts
+    User.java --- |"Usa"| Postgres
 ```
-- `io.jsonwebtoken.Jwts` : Usado para construir e verificar tokens JWT.
-- `io.jsonwebtoken.JwtParser` : Usado para analisar tokens JWT.
-- `io.jsonwebtoken.SignatureAlgorithm` : Usado para definir o algoritmo de assinatura para o token JWT.
-- `io.jsonwebtoken.security.Keys` : Usado para gerar a chave de assinatura para o token JWT.
-- `javax.crypto.SecretKey` : Usado para representar a chave de assinatura para o token JWT.
-- `Postgres` : Classe que fornece a conexão com o banco de dados PostgreSQL.
-
-## Vulnerabilidades
-- O método `fetch` está vulnerável a ataques de injeção SQL, pois a consulta SQL é construída concatenando diretamente a entrada do usuário (`un`), sem qualquer sanitização ou uso de consultas preparadas.
-- O método `assertAuth` imprime a pilha de exceções completa quando ocorre uma falha de autenticação. Isso pode expor detalhes sensíveis do sistema e facilitar ataques.
+- `Keys` : Usado para gerar uma chave secreta para a assinatura do token JWT.
+- `Jwts` : Usado para construir e analisar tokens JWT.
+- `Postgres` : Usado para estabelecer uma conexão com o banco de dados PostgreSQL e executar consultas SQL.
 
 ## Manipulação de Dados (SQL)
-- `users`: A tabela `users` é acessada para recuperar informações do usuário. A operação SQL realizada é SELECT.
+- `users`: A tabela `users` é consultada para buscar um usuário pelo seu nome de usuário. A consulta SQL é executada usando o método `executeQuery()` do objeto `PreparedStatement`.
+
+## Vulnerabilidades
+- O método `fetch()` pode estar vulnerável a ataques de injeção SQL, pois utiliza a entrada do usuário diretamente na consulta SQL. Recomenda-se o uso de consultas parametrizadas para prevenir essa vulnerabilidade.
+- O método `assertAuth()` lança uma exceção genérica `Unauthorized` quando ocorre um erro ao analisar o token JWT. Isso pode levar a vazamento de informações se a mensagem da exceção contiver detalhes sobre a implementação interna do sistema.
+- O método `token()` define um tempo de expiração fixo para o token JWT. Isso pode não ser adequado para todos os cenários de uso, pois diferentes usuários ou sessões podem exigir diferentes tempos de expiração.
