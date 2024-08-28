@@ -8,12 +8,18 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 public class Postgres {
 
+    private static final Logger LOGGER = Logger.getLogger(Postgres.class.getName());
+
+    private Postgres() {
+        // private constructor to hide the implicit public one
+    }
+
     public static Connection connection() {
         try {
-            Class.forName("org.postgresql.Driver");
             String url = new StringBuilder()
                     .append("jdbc:postgresql://")
                     .append(System.getenv("PGHOST"))
@@ -22,17 +28,17 @@ public class Postgres {
             return DriverManager.getConnection(url,
                     System.getenv("PGUSER"), System.getenv("PGPASSWORD"));
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println(e.getClass().getName()+": "+e.getMessage());
+            LOGGER.severe(e.getClass().getName()+": "+e.getMessage());
             System.exit(1);
         }
         return null;
     }
+
     public static void setup(){
         Connection c = null;
         Statement stmt = null;
         try {
-            System.out.println("Setting up Database...");
+            LOGGER.info("Setting up Database...");
             c = connection();
             stmt = c.createStatement();
 
@@ -54,14 +60,14 @@ public class Postgres {
             insertComment("rick", "cool dog m8");
             insertComment("alice", "OMG so cute!");
         } catch (Exception e) {
-            System.out.println(e);
+            LOGGER.severe(e.getMessage());
             System.exit(1);
         } finally {
             try {
-                if (stmt != null) stmt.close(); // Alterado por GFT AI Impact Bot
-                if (c != null) c.close(); // Alterado por GFT AI Impact Bot
+                if (stmt != null) stmt.close();
+                if (c != null) c.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.severe(e.getMessage());
             }
         }
     }
@@ -97,46 +103,46 @@ public class Postgres {
 
     private static void insertUser(String username, String password) {
        String sql = "INSERT INTO users (user_id, username, password, created_on) VALUES (?, ?, ?, current_timestamp)";
-       Connection c = null; // Incluido por GFT AI Impact Bot
+       Connection c = null;
        PreparedStatement pStatement = null;
        try {
-          c = connection(); // Alterado por GFT AI Impact Bot
+          c = connection();
           pStatement = c.prepareStatement(sql);
           pStatement.setString(1, UUID.randomUUID().toString());
           pStatement.setString(2, username);
           pStatement.setString(3, md5(password));
           pStatement.executeUpdate();
        } catch(Exception e) {
-         e.printStackTrace();
+         LOGGER.severe(e.getMessage());
        } finally {
            try {
-               if (pStatement != null) pStatement.close(); // Incluido por GFT AI Impact Bot
-               if (c != null) c.close(); // Incluido por GFT AI Impact Bot
+               if (pStatement != null) pStatement.close();
+               if (c != null) c.close();
            } catch (Exception e) {
-               e.printStackTrace();
+               LOGGER.severe(e.getMessage());
            }
        }
     }
 
     private static void insertComment(String username, String body) {
         String sql = "INSERT INTO comments (id, username, body, created_on) VALUES (?, ?, ?, current_timestamp)";
-        Connection c = null; // Incluido por GFT AI Impact Bot
+        Connection c = null;
         PreparedStatement pStatement = null;
         try {
-            c = connection(); // Alterado por GFT AI Impact Bot
+            c = connection();
             pStatement = c.prepareStatement(sql);
             pStatement.setString(1, UUID.randomUUID().toString());
             pStatement.setString(2, username);
             pStatement.setString(3, body);
             pStatement.executeUpdate();
         } catch(Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.getMessage());
         } finally {
             try {
-                if (pStatement != null) pStatement.close(); // Incluido por GFT AI Impact Bot
-                if (c != null) c.close(); // Incluido por GFT AI Impact Bot
+                if (pStatement != null) pStatement.close();
+                if (c != null) c.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.severe(e.getMessage());
             }
         }
     }
