@@ -11,6 +11,7 @@ public class VulnadoApplicationTests {
 
 	@Test
 	public void contextLoads() {
+assertNotNull("Context should have loaded", this);
 	}
 
 }
