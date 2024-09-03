@@ -9,11 +9,11 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.UUID;
 
+private Postgres() {}
 public class Postgres {
 
     public static Connection connection() {
         try {
-            Class.forName("org.postgresql.Driver");
             String url = new StringBuilder()
                     .append("jdbc:postgresql://")
                     .append(System.getenv("PGHOST"))
@@ -23,7 +23,7 @@ public class Postgres {
                     System.getenv("PGUSER"), System.getenv("PGPASSWORD"));
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println(e.getClass().getName()+": "+e.getMessage());
+            Logger.getLogger(Postgres.class.getName()).log(Level.SEVERE, null, e);
             System.exit(1);
         }
         return null;
@@ -32,7 +32,7 @@ public class Postgres {
         Connection c = null;
         Statement stmt = null;
         try {
-            System.out.println("Setting up Database...");
+            Logger.getLogger(Postgres.class.getName()).log(Level.INFO, "Setting up Database...");
             c = connection();
             stmt = c.createStatement();
 
@@ -54,7 +54,7 @@ public class Postgres {
             insertComment("rick", "cool dog m8");
             insertComment("alice", "OMG so cute!");
         } catch (Exception e) {
-            System.out.println(e);
+            Logger.getLogger(Postgres.class.getName()).log(Level.SEVERE, null, e);
             System.exit(1);
         } finally {
             try {
@@ -72,7 +72,7 @@ public class Postgres {
         try {
 
             // Static getInstance method is called with hashing MD5
-            MessageDigest md = MessageDigest.getInstance("MD5");
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
 
             // digest() method is called to calculate message digest
             //  of an input digest() return array of byte
@@ -84,14 +84,14 @@ public class Postgres {
             // Convert message digest into hex value
             String hashtext = no.toString(16);
             while (hashtext.length() < 32) {
-                hashtext = "0" + hashtext;
+                hashtext = hashtext.concat("0");
             }
             return hashtext;
         }
 
         // For specifying wrong message digest algorithms
         catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            throw new NoSuchAlgorithmException("Invalid algorithm", e);
         }
     }
 
@@ -107,13 +107,13 @@ public class Postgres {
           pStatement.setString(3, md5(password));
           pStatement.executeUpdate();
        } catch(Exception e) {
-         e.printStackTrace();
+         // e.printStackTrace();
        } finally {
            try {
                if (pStatement != null) pStatement.close(); // Incluido por GFT AI Impact Bot
                if (c != null) c.close(); // Incluido por GFT AI Impact Bot
            } catch (Exception e) {
-               e.printStackTrace();
+               // e.printStackTrace();
            }
        }
     }
@@ -130,13 +130,13 @@ public class Postgres {
             pStatement.setString(3, body);
             pStatement.executeUpdate();
         } catch(Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
         } finally {
             try {
                 if (pStatement != null) pStatement.close(); // Incluido por GFT AI Impact Bot
                 if (c != null) c.close(); // Incluido por GFT AI Impact Bot
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
             }
         }
     }
