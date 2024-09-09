@@ -24,20 +24,20 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      - run: |
-          ls -la
-          python3 /home/azureuser/pack/check2.py --java pom.xml --token ${{ secrets.GITHUB_TOKEN }} 
+      #- run: |
+      #    ls -la
+      #    python3 /home/azureuser/pack/check2.py --java pom.xml --token ${{ secrets.GITHUB_TOKEN }} 
 
-      - name: Add Comment to Issue
-        run: |
-          COMMENT=$(cat dependency_scan_report.md | sed ':a;N;$!ba;s/\n/\\n/g' | sed 's/"/\\"/g')
-          ISSUE_NUMBER=${{ github.event.pull_request.number }}
-          REPO=${{ github.repository }}
-          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-               -H "Accept: application/vnd.github.v3+json" \
-               -d "{\"body\": \"${COMMENT}\"}" \
-               https://api.github.com/repos/$REPO/issues/$ISSUE_NUMBER/comments
-          rm dependency_scan_report.md
+      #- name: Add Comment to Issue
+      #  run: |
+      #    COMMENT=$(cat dependency_scan_report.md | sed ':a;N;$!ba;s/\n/\\n/g' | sed 's/"/\\"/g')
+      #    ISSUE_NUMBER=${{ github.event.pull_request.number }}
+      #    REPO=${{ github.repository }}
+      #    curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+      #         -H "Accept: application/vnd.github.v3+json" \
+      #         -d "{\"body\": \"${COMMENT}\"}" \
+      #         https://api.github.com/repos/$REPO/issues/$ISSUE_NUMBER/comments
+      #    rm dependency_scan_report.md
           
       - name: Checkout the branch
         run: |
