@@ -1,3 +1,5 @@
+import java.util.logging.Level;
+import java.util.logging.Logger;
 package com.scalesec.vulnado;
 
 import java.sql.Connection;
@@ -10,10 +12,11 @@ import java.sql.Statement;
 import java.util.UUID;
 
 public class Postgres {
+    private Postgres() {}
+    private static final Logger LOGGER = Logger.getLogger(Postgres.class.getName());
 
     public static Connection connection() {
         try {
-            Class.forName("org.postgresql.Driver");
             String url = new StringBuilder()
                     .append("jdbc:postgresql://")
                     .append(System.getenv("PGHOST"))
@@ -22,8 +25,7 @@ public class Postgres {
             return DriverManager.getConnection(url,
                     System.getenv("PGUSER"), System.getenv("PGPASSWORD"));
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println(e.getClass().getName()+": "+e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error connecting to database", e);
             System.exit(1);
         }
         return null;
@@ -32,7 +34,7 @@ public class Postgres {
         Connection c = null;
         Statement stmt = null;
         try {
-            System.out.println("Setting up Database...");
+            LOGGER.info("Setting up Database...");
             c = connection();
             stmt = c.createStatement();
 
@@ -54,14 +56,14 @@ public class Postgres {
             insertComment("rick", "cool dog m8");
             insertComment("alice", "OMG so cute!");
         } catch (Exception e) {
-            System.out.println(e);
+            LOGGER.log(Level.SEVERE, "Error setting up database", e);
             System.exit(1);
         } finally {
             try {
                 if (stmt != null) stmt.close(); // Alterado por GFT AI Impact Bot
                 if (c != null) c.close(); // Alterado por GFT AI Impact Bot
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Error closing database resources", e);
             }
         }
     }
@@ -72,7 +74,7 @@ public class Postgres {
         try {
 
             // Static getInstance method is called with hashing MD5
-            MessageDigest md = MessageDigest.getInstance("MD5");
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
 
             // digest() method is called to calculate message digest
             //  of an input digest() return array of byte
@@ -84,19 +86,24 @@ public class Postgres {
             // Convert message digest into hex value
             String hashtext = no.toString(16);
             while (hashtext.length() < 32) {
-                hashtext = "0" + hashtext;
-            }
-            return hashtext;
+            StringBuilder hashtext = new StringBuilder(no.toString(16));
+            while (hashtext.length() < 64) {
+                hashtext.insert(0, "0");
         }
-
+            return hashtext.toString();
         // For specifying wrong message digest algorithms
         catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            throw new HashingException("Error hashing password", e);
         }
+    private static class HashingException extends RuntimeException {
     }
+        public HashingException(String message, Throwable cause) {
 
+            super(message, cause);
     private static void insertUser(String username, String password) {
+        }
        String sql = "INSERT INTO users (user_id, username, password, created_on) VALUES (?, ?, ?, current_timestamp)";
+    }
        Connection c = null; // Incluido por GFT AI Impact Bot
        PreparedStatement pStatement = null;
        try {
@@ -107,13 +114,13 @@ public class Postgres {
           pStatement.setString(3, md5(password));
           pStatement.executeUpdate();
        } catch(Exception e) {
-         e.printStackTrace();
+         LOGGER.log(Level.SEVERE, "Error inserting user", e);
        } finally {
            try {
                if (pStatement != null) pStatement.close(); // Incluido por GFT AI Impact Bot
                if (c != null) c.close(); // Incluido por GFT AI Impact Bot
            } catch (Exception e) {
-               e.printStackTrace();
+               LOGGER.log(Level.SEVERE, "Error closing database resources", e);
            }
        }
     }
@@ -130,13 +137,13 @@ public class Postgres {
             pStatement.setString(3, body);
             pStatement.executeUpdate();
         } catch(Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error inserting comment", e);
         } finally {
             try {
                 if (pStatement != null) pStatement.close(); // Incluido por GFT AI Impact Bot
                 if (c != null) c.close(); // Incluido por GFT AI Impact Bot
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Error closing database resources", e);
             }
         }
     }
