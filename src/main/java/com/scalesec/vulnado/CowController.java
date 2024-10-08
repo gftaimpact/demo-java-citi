@@ -1,15 +1,1 @@
-package com.scalesec.vulnado;
-
-import org.springframework.web.bind.annotation.*;
-import org.springframework.boot.autoconfigure.*;
-
-import java.io.Serializable;
-
-@RestController
-@EnableAutoConfiguration
-public class CowController {
-    @RequestMapping(value = "/cowsay")
-    String cowsay(@RequestParam(defaultValue = "I love Linux!") String input) {
-        return Cowsay.run(input);
-    }
-}
+Malformed input request, please reformat your input and try again. Error Code: ValidationException
