@@ -8,11 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.IOException;
 import java.net.*;
-
+import java.util.logging.Logger;
 
 public class LinkLister {
+  
+  private LinkLister() { }
+  
   public static List<String> getLinks(String url) throws IOException {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     Document doc = Jsoup.connect(url).get();
     Elements links = doc.select("a");
     for (Element link : links) {
@@ -23,9 +26,9 @@ public class LinkLister {
 
   public static List<String> getLinksV2(String url) throws BadRequest {
     try {
-      URL aUrl= new URL(url);
+      URL aUrl = new URL(url);
       String host = aUrl.getHost();
-      System.out.println(host);
+      Logger.getAnonymousLogger().info(host);
       if (host.startsWith("172.") || host.startsWith("192.168") || host.startsWith("10.")){
         throw new BadRequest("Use of Private IP");
       } else {
@@ -34,5 +37,25 @@ public class LinkLister {
     } catch(Exception e) {
       throw new BadRequest(e.getMessage());
     }
+  }
+  
+  // Test methods
+  public static void main(String[] args) throws Exception {
+    testGetLinks();
+    testGetLinksV2();
+  }
+
+  public static void testGetLinks() throws Exception {
+    //TDB
+  }
+  
+  public static void testGetLinksV2() throws Exception {
+    //TDB
+  }
+}
+
+class BadRequest extends Exception {
+  public BadRequest(String message) {
+    super(message);
   }
 }
