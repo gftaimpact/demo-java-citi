@@ -1,4 +1,4 @@
-package com.scalesec.vulnado;
+ package com.scalesec.vulnado;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -8,11 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.IOException;
 import java.net.*;
-
+import java.util.logging.Logger;
 
 public class LinkLister {
+  
+  private LinkLister() { }
+  
   public static List<String> getLinks(String url) throws IOException {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     Document doc = Jsoup.connect(url).get();
     Elements links = doc.select("a");
     for (Element link : links) {
@@ -23,9 +26,9 @@ public class LinkLister {
 
   public static List<String> getLinksV2(String url) throws BadRequest {
     try {
-      URL aUrl= new URL(url);
+      URL aUrl = new URL(url);
       String host = aUrl.getHost();
-      System.out.println(host);
+      Logger.getAnonymousLogger().info(host);
       if (host.startsWith("172.") || host.startsWith("192.168") || host.startsWith("10.")){
         throw new BadRequest("Use of Private IP");
       } else {
@@ -33,6 +36,26 @@ public class LinkLister {
       }
     } catch(Exception e) {
       throw new BadRequest(e.getMessage());
+    }
+  }
+  
+  public static class BadRequest extends Exception {
+    public BadRequest(String message) {
+      super(message);
+    }
+  }
+
+  //TEST METHODS
+  public static void main(String[] args) throws Exception {
+    List<String> links = LinkLister.getLinks("https://example.com/");
+    for(String link : links) {
+      System.out.println(link);
+    }
+    
+    try {
+      LinkLister.getLinksV2("http://192.168.0.1");
+    } catch (BadRequest e) {
+      System.out.println("Caught exception: " + e.getMessage());
     }
   }
 }
